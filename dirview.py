@@ -47,13 +47,17 @@
 import os
 import sys
 
-from PyQt5.QtCore import (QCommandLineOption, QCommandLineParser,
+from PyQt5.QtCore import (QCommandLineOption, QCommandLineParser, 
         QCoreApplication, QDir, QT_VERSION_STR)
 from PyQt5.QtWidgets import (QApplication, QFileIconProvider, QFileSystemModel,
         QTreeView, QLineEdit, QMainWindow, QVBoxLayout, QWidget)
 
 
 from PyQt5.QtGui import QStandardItemModel
+
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, QRegExp, QDir
+
+
 
 class MyWindow(QMainWindow):  
         
@@ -64,15 +68,11 @@ class MyWindow(QMainWindow):
         self.line_edit = QLineEdit(self)
         self.tree = QTreeView(self)
         
-        self.tree.setAnimated(False)
-        self.tree.setIndentation(20)
-        self.tree.setSortingEnabled(True)
-        
         central_widget = QWidget(self)
         
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(['Name'])
-        self.tree.setModel(self.model)
+        self.item_model = QStandardItemModel()
+        self.item_model .setHorizontalHeaderLabels(['Name'])
+        self.tree.setModel(self.item_model)
         layout = QVBoxLayout(central_widget)
         
         layout.addWidget(self.line_edit)
@@ -108,17 +108,40 @@ try:
 except IndexError:
     rootPath = None
 
-user_path = os.path.expanduser('~')
+
 model = QFileSystemModel()
-model.setRootPath(user_path)
 if parser.isSet(dontUseCustomDirectoryIconsOption):
     model.iconProvider().setOptions(
             QFileIconProvider.DontUseCustomDirectoryIcons)
 
+user_path = QDir.homePath()
 
 window = MyWindow()
 window.tree.setModel(model)
-window.tree.setRootIndex(model.index(user_path))
+
+proxy_model = QSortFilterProxyModel()
+proxy_model.setSourceModel(model)
+proxy_index = proxy_model.mapFromSource(model.setRootPath(user_path))
+window.tree.setModel(proxy_model)
+window.tree.setRootIndex(proxy_index)
+
+
+
+def filter_files():
+        # Устанавливаем фильтр на основании текста из QLineEdit
+        regex = QRegExp(f"{window.line_edit.text()}", Qt.CaseInsensitive)
+        if regex.isValid():
+                proxy_model.setFilterRegExp(regex)
+                proxy_model.setFilterKeyColumn(0)
+                index = proxy_model.mapFromSource(model.setRootPath(user_path))
+                window.tree.setRootIndex(index)
+                
+                
+
+                
+
+
+window.line_edit.textChanged.connect(filter_files)
 
 
 # ?
