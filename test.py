@@ -1,15 +1,17 @@
-import os
 import sys
 
 from PyQt5.QtCore import (QCommandLineOption, QCommandLineParser,
         QCoreApplication, QDir, QT_VERSION_STR)
 from PyQt5.QtWidgets import (QApplication, QFileIconProvider, QFileSystemModel,
-        QTreeView, QLineEdit, QMainWindow, QVBoxLayout, QWidget)
+        QTreeView, QLineEdit, QMainWindow, QVBoxLayout, QWidget, QAbstractItemView, QPushButton)
 
 
 from PyQt5.QtGui import QStandardItemModel
 
-from PyQt5.QtCore import QSortFilterProxyModel, Qt, QRegExp, QDir
+from PyQt5.QtCore import  QDir
+
+from del1 import TreeButtonDelegate
+from delegete import SizeDelegate
 
 
 
@@ -33,6 +35,7 @@ class MyWindow(QMainWindow):
                 layout.addWidget(self.tree)
 
 
+
                 self.setCentralWidget(central_widget)
                 availableSize = QApplication.desktop().availableGeometry(self.tree).size()
                 self.resize(availableSize / 2)
@@ -48,12 +51,25 @@ class MyWindow(QMainWindow):
                 self.tree.setModel(self.model)
                 self.model.setNameFilterDisables(False)
                 self.model.setFilter(QDir.Files | QDir.Dirs | QDir.Hidden)
+                
 
                 user_path = QDir.homePath()
                 index = self.model.setRootPath(user_path)
                 self.tree.setRootIndex(index)
                 self.line_edit.textChanged.connect(self.update_filter)
-        
+                
+
+                self.delegate = TreeButtonDelegate(self.model, self.tree)
+                self.tree.setItemDelegateForColumn(1, self.delegate)       
+                self.tree.setMouseTracking(True)
+                
+
+                self.delegate.buttonClicked.connect(self.treeButtonClicked)
+                
+        def treeButtonClicked(self, index, count):
+                filePath = self.model.filePath(index)
+                print(str(count))
+
         def update_filter(self):
                 if self.line_edit.text():
                         window.model.setNameFilters([f"*{self.line_edit.text()}*"])
@@ -90,6 +106,8 @@ if rootPath is not None:
     rootIndex = window.model.index(QDir.cleanPath(rootPath))
     if rootIndex.isValid():
         window.tree.setRootIndex(rootIndex)
+
+
 
 window.show()
 sys.exit(app.exec_())

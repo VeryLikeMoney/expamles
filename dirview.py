@@ -135,11 +135,6 @@ def filter_files():
                 proxy_model.setFilterKeyColumn(0)
                 index = proxy_model.mapFromSource(model.setRootPath(user_path))
                 window.tree.setRootIndex(index)
-                
-                
-
-                
-
 
 window.line_edit.textChanged.connect(filter_files)
 
