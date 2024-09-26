@@ -93,7 +93,7 @@ class MyWindow(QMainWindow):
                 name_size = ('байта','KB', 'MB', 'GB', 'TB')
                 while size>1024.0:
                         i += 1
-                        size = int(size / 1024.0)
+                        size = round(size / 1024.0, 2)
                 return f'{size} {name_size[i]}'    
                 
 
