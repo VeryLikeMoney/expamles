@@ -9,20 +9,20 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
         def __init__(self, fsModel, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.fsModel = fsModel
-
                 self.clickedPaths = {}
 
         def check_point_dir(self, index) -> bool:
+                """ Исключение скрытых файлов с названием . и .. """
                 dirPath = self.fsModel.filePath(index)[-2::]
                 return dirPath != '..'  and dirPath[-1] != '.'
 
         def editorEvent(self, event, model, option, index):
                 if event.type() == QtCore.QEvent.MouseButtonRelease:
-                        print(1)
                         self.buttonClicked.emit(index)
-                return 1
+                return 0
         
         def getOption(self, option, index):
+                """ Отрисовка кнопок"""
                 self.btnOption = QtWidgets.QStyleOptionButton()
                 self.btnOption.initFrom(option.widget)
                 
