@@ -18,8 +18,8 @@ class Worker(QObject):
             """ Подсчет размера папки """
             sizePath = 0
             dir = QDir(dirPath)
-            for filePath in dir.entryList(QDir.Files | QDir.Hidden):
-                    sizePath += QFileInfo(dir, filePath).size()
-            for childDirPath in dir.entryList(QDir.Dirs | QDir.NoDotAndDotDot | QDir.Hidden):
-                    sizePath += self.dirSize(dirPath + QDir.separator() + childDirPath)
+            for file_path in dir.entryList(QDir.Files | QDir.Hidden):
+                    sizePath += QFileInfo(dir, file_path).size()
+            for child_dir_path in dir.entryList(QDir.Dirs | QDir.NoDotAndDotDot | QDir.Hidden):
+                    sizePath += self.dirSize(dirPath + QDir.separator() + child_dir_path)
             return sizePath

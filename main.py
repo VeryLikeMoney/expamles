@@ -1,12 +1,11 @@
 import sys
 
 from PyQt5.QtCore import (QCommandLineOption, QCommandLineParser,
-        QCoreApplication, QDir, QFileInfo, QT_VERSION_STR)
+        QCoreApplication, QDir, QT_VERSION_STR, QDir, QThread)
 from PyQt5.QtWidgets import (QApplication, QFileIconProvider, QFileSystemModel,
         QTreeView, QLineEdit, QMainWindow, QVBoxLayout, QWidget)
 
 from PyQt5.QtGui import QStandardItemModel
-from PyQt5.QtCore import  QDir, QThread
 from delegete import TreeButtonDelegate
 from threed import Worker
 
@@ -21,7 +20,8 @@ class MyWindow(QMainWindow):
                 self.tree = QTreeView(self)
                 central_widget = QWidget(self)
                 self.item_model = QStandardItemModel()
-                
+
+                self.line_edit.setPlaceholderText('Поиск')
                 self.item_model .setHorizontalHeaderLabels(['Name'])
                 self.tree.setModel(self.item_model)
                 layout = QVBoxLayout(central_widget)
@@ -39,34 +39,32 @@ class MyWindow(QMainWindow):
                 self.tree.setIndentation(20)
                 self.tree.setSortingEnabled(True)
 
-                
                 self.user_path = QDir.homePath()
-                self.clickedPaths = {}
+                self.clicked_paths = {}
                 #QFileModel
                 self.add_model_and_delegate()
-                self.line_edit.textChanged.connect(self.update_filter)
-                
+                self.line_edit.textChanged.connect(self.update_filter)          
                 self.thread = QThread()
-        
+
         def setting_model(self):
                 """ Настройка model"""
                 self.model = QFileSystemModel()
-                self.tree.setModel(self.model)
                 self.model.setNameFilterDisables(False)
                 self.model.setFilter(QDir.Files | QDir.Dirs | QDir.Hidden)
                 index = self.model.setRootPath(self.user_path)
+                self.tree.setModel(self.model)
                 self.tree.setRootIndex(index)
-        
+
         def setting_delegate(self):
                 """ Настройка delegate"""
                 if hasattr(self, "delegate"):
-                        self.clickedPaths = self.delegate.clickedPaths
+                        self.clicked_paths = self.delegate.clickedPaths
                 self.delegate = TreeButtonDelegate(self.model, self.tree)
                 self.tree.setItemDelegateForColumn(1, self.delegate)       
                 self.tree.setMouseTracking(True)
-                self.delegate.clickedPaths = self.clickedPaths
+                self.delegate.clickedPaths = self.clicked_paths
                 self.delegate.buttonClicked.connect(self.treeButtonClicked)
-               
+      
         def add_model_and_delegate(self):
                 """ Вызов настройки model и delegate"""
                 self.setting_model()
@@ -74,19 +72,20 @@ class MyWindow(QMainWindow):
 
         def treeButtonClicked(self, index):
                 """ Обработка нажатия кнопки во втором стобце для подсчета размера папки"""
-                self.dirPath = self.model.filePath(index)
-                self.worker = Worker(self.dirPath)
+                self.dir_path = self.model.filePath(index)
+                self.worker = Worker(self.dir_path)
                 self.worker.moveToThread(self.thread)
                 self.thread.started.connect(self.worker.run)
                 self.worker.result_ready.connect(self.handle_result)
-                self.thread.start()        
-                #self.add_model_and_delegate()             
-                #self.update_filter()
+                self.thread.start()   
+                     
+                self.add_model_and_delegate()       
+                self.update_filter()
                 
         def handle_result(self, size):
-        # Обрабатываем результат, полученный из рабочего потока
+                """ Обрабатываем результат, полученный из рабочего потока """
                 size = self.convert(size)
-                self.delegate.clickedPaths.setdefault(self.dirPath, size)
+                self.delegate.clickedPaths.setdefault(self.dir_path, size)
                 self.thread.quit()
                 self.thread.wait()
 
@@ -99,24 +98,13 @@ class MyWindow(QMainWindow):
                         size = round(size / 1024.0, 2)
                 return f'{size} {name_size[i]}'    
                 
-        # def dirSize(self, dirPath: str):
-        #         """ Подсчет размера папки """
-        #         sizePath = 0
-        #         dir = QDir(dirPath)
-        #         for filePath in dir.entryList(QDir.Files | QDir.Hidden):
-        #                 sizePath += QFileInfo(dir, filePath).size()
-        #         for childDirPath in dir.entryList(QDir.Dirs | QDir.NoDotAndDotDot | QDir.Hidden):
-        #                 sizePath += self.dirSize(dirPath + QDir.separator() + childDirPath)
-        #         return sizePath
-
         def update_filter(self):
                 """ Добавление фильтра поиска"""
                 if self.line_edit.text():
                         window.model.setNameFilters([f"*{self.line_edit.text()}*"])         
                 else:
                         window.model.setNameFilters(["*"])
-                
-                
+      
 app = QApplication(sys.argv)
 window = MyWindow()
 

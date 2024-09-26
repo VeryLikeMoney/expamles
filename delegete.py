@@ -22,7 +22,7 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
                 return 0
         
         def getOption(self, option, index):
-                """ Отрисовка кнопок"""
+                """ Отрисовка кнопок в заданном стиле"""
                 self.btnOption = QtWidgets.QStyleOptionButton()
                 self.btnOption.initFrom(option.widget)
                 
@@ -33,19 +33,13 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
                         self.btnOption.text = 'Обновить'
 
                 self.btnOption.rect = QtCore.QRect(option.rect)
-
                 self.btnOption.rect.setLeft(option.rect.right() - self.minimumButtonWidth)
-
                 style = option.widget.style()
-
                 textRect = style.subElementRect(
                 QtWidgets.QStyle.SE_PushButtonContents, self.btnOption)
-
                 margin = style.pixelMetric(
                 QtWidgets.QStyle.PM_ButtonMargin, self.btnOption) * 2
-
                 textWidth = self.btnOption.fontMetrics.width(self.btnOption.text)
-
                 if textRect.width() < textWidth + margin:
 
                         self.btnOption.rect.setLeft(self.btnOption.rect.left() - (
