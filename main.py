@@ -6,9 +6,9 @@ from PyQt5.QtWidgets import (QApplication, QFileIconProvider, QFileSystemModel,
         QTreeView, QLineEdit, QMainWindow, QVBoxLayout, QWidget)
 
 from PyQt5.QtGui import QStandardItemModel
-from PyQt5.QtCore import  QDir
+from PyQt5.QtCore import  QDir, QThread
 from delegete import TreeButtonDelegate
-
+from threed import Worker
 
 class MyWindow(QMainWindow):
 
@@ -44,6 +44,9 @@ class MyWindow(QMainWindow):
                 self.clickedPaths = {}
                 #QFileModel
                 self.add_model_and_delegate()
+                self.line_edit.textChanged.connect(self.update_filter)
+                
+                self.thread = QThread()
         
         def setting_model(self):
                 """ Настройка model"""
@@ -71,14 +74,21 @@ class MyWindow(QMainWindow):
 
         def treeButtonClicked(self, index):
                 """ Обработка нажатия кнопки во втором стобце для подсчета размера папки"""
-                dirPath = self.model.filePath(index)
-                sizePath = self.dirSize(dirPath)
-                sizePath = self.convert(sizePath)
+                self.dirPath = self.model.filePath(index)
+                self.worker = Worker(self.dirPath)
+                self.worker.moveToThread(self.thread)
+                self.thread.started.connect(self.worker.run)
+                self.worker.result_ready.connect(self.handle_result)
+                self.thread.start()        
+                #self.add_model_and_delegate()             
+                #self.update_filter()
                 
-                self.delegate.clickedPaths.setdefault(dirPath, sizePath)
-                self.add_model_and_delegate()       
-                self.tree.setCurrentIndex(index)           
-                self.update_filter()
+        def handle_result(self, size):
+        # Обрабатываем результат, полученный из рабочего потока
+                size = self.convert(size)
+                self.delegate.clickedPaths.setdefault(self.dirPath, size)
+                self.thread.quit()
+                self.thread.wait()
 
         def convert(self, size) -> str:
                 """Перевод из байтов"""
@@ -89,15 +99,15 @@ class MyWindow(QMainWindow):
                         size = round(size / 1024.0, 2)
                 return f'{size} {name_size[i]}'    
                 
-        def dirSize(self, dirPath: str):
-                """ Подсчет размера папки """
-                sizePath = 0
-                dir = QDir(dirPath)
-                for filePath in dir.entryList(QDir.Files | QDir.Hidden):
-                        sizePath += QFileInfo(dir, filePath).size()
-                for childDirPath in dir.entryList(QDir.Dirs | QDir.NoDotAndDotDot | QDir.Hidden):
-                        sizePath += self.dirSize(dirPath + QDir.separator() + childDirPath)
-                return sizePath
+        # def dirSize(self, dirPath: str):
+        #         """ Подсчет размера папки """
+        #         sizePath = 0
+        #         dir = QDir(dirPath)
+        #         for filePath in dir.entryList(QDir.Files | QDir.Hidden):
+        #                 sizePath += QFileInfo(dir, filePath).size()
+        #         for childDirPath in dir.entryList(QDir.Dirs | QDir.NoDotAndDotDot | QDir.Hidden):
+        #                 sizePath += self.dirSize(dirPath + QDir.separator() + childDirPath)
+        #         return sizePath
 
         def update_filter(self):
                 """ Добавление фильтра поиска"""
