@@ -48,28 +48,48 @@ class MyWindow(QMainWindow):
                 self.tree.setModel(self.model)
                 self.model.setNameFilterDisables(False)
                 self.model.setFilter(QDir.Files | QDir.Dirs | QDir.Hidden)
-                
 
                 self.user_path = QDir.homePath()
                 index = self.model.setRootPath(self.user_path)
                 self.tree.setRootIndex(index)
                 self.line_edit.textChanged.connect(self.update_filter)
-                
-                
+   
                 self.delegate = TreeButtonDelegate(self.model, self.tree)
                 self.tree.setItemDelegateForColumn(1, self.delegate)       
                 self.tree.setMouseTracking(True)
-                
+                self.clickedPaths = {}
 
                 self.delegate.buttonClicked.connect(self.treeButtonClicked)
                 
         def treeButtonClicked(self, index):
+                print("treeButtonClicked")
                 dirPath = self.model.filePath(index)
                 sizePath = self.dirSize(dirPath)
                 sizePath = f'{sizePath} байта'
-                self.delegate.clickedPaths.setdefault(dirPath, sizePath)    
-                print(dirPath)
-                       
+                self.delegate.clickedPaths.setdefault(dirPath, sizePath)
+                
+                focus_index = self.tree.currentIndex()
+                self.model = QFileSystemModel()
+                self.tree.setModel(self.model)
+                self.model.setNameFilterDisables(False)
+                self.model.setFilter(QDir.Files | QDir.Dirs | QDir.Hidden)
+                
+                self.user_path = QDir.homePath()
+                index = self.model.setRootPath(self.user_path)
+                self.tree.setRootIndex(index)
+                
+                self.clickedPaths = self.delegate.clickedPaths
+                self.delegate = TreeButtonDelegate(self.model, self.tree)
+                self.tree.setItemDelegateForColumn(1, self.delegate)       
+                self.tree.setMouseTracking(True)
+                self.delegate.clickedPaths = self.clickedPaths
+                self.delegate.buttonClicked.connect(self.treeButtonClicked)
+                
+                self.tree.setCurrentIndex(focus_index)
+
+                
+                
+  
 
         def dirSize(self, dirPath: str):
             sizePath = 0

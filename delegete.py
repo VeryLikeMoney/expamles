@@ -14,6 +14,7 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
 
         def editorEvent(self, event, model, option, index):
                 if event.type() == QtCore.QEvent.MouseButtonRelease:
+                        print(1)
                         self.buttonClicked.emit(index)
                 return 1
         
@@ -51,10 +52,8 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
         def paint(self, painter, option, index):
                 super().paint(painter, option, index)
                 srcIndex = index
-                if not self.fsModel.isDir(srcIndex):
+                if self.fsModel.isDir(srcIndex):
                         btnOption = self.getOption(option, srcIndex)
-
-
                         option.widget.style().drawControl(
                                 QtWidgets.QStyle.CE_PushButton, btnOption, painter)
 
