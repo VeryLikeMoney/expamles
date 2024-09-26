@@ -12,6 +12,10 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
 
                 self.clickedPaths = {}
 
+        def check_point_dir(self, index) -> bool:
+                dirPath = self.fsModel.filePath(index)[-2::]
+                return dirPath != '..'  and dirPath[-1] != '.'
+
         def editorEvent(self, event, model, option, index):
                 if event.type() == QtCore.QEvent.MouseButtonRelease:
                         print(1)
@@ -52,7 +56,7 @@ class TreeButtonDelegate(QtWidgets.QStyledItemDelegate):
         def paint(self, painter, option, index):
                 super().paint(painter, option, index)
                 srcIndex = index
-                if self.fsModel.isDir(srcIndex):
+                if self.fsModel.isDir(srcIndex) and self.check_point_dir(index):
                         btnOption = self.getOption(option, srcIndex)
                         option.widget.style().drawControl(
                                 QtWidgets.QStyle.CE_PushButton, btnOption, painter)

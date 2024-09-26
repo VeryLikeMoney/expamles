@@ -65,10 +65,10 @@ class MyWindow(QMainWindow):
                 print("treeButtonClicked")
                 dirPath = self.model.filePath(index)
                 sizePath = self.dirSize(dirPath)
-                sizePath = f'{sizePath} байта'
+                sizePath = self.convert(sizePath)
                 self.delegate.clickedPaths.setdefault(dirPath, sizePath)
                 
-                focus_index = self.tree.currentIndex()
+                focus_index = index
                 self.model = QFileSystemModel()
                 self.tree.setModel(self.model)
                 self.model.setNameFilterDisables(False)
@@ -84,12 +84,18 @@ class MyWindow(QMainWindow):
                 self.tree.setMouseTracking(True)
                 self.delegate.clickedPaths = self.clickedPaths
                 self.delegate.buttonClicked.connect(self.treeButtonClicked)
-                
                 self.tree.setCurrentIndex(focus_index)
+                
+                self.update_filter()
 
+        def convert(self, size) -> str:
+                i = 0
+                name_size = ('байта','KB', 'MB', 'GB', 'TB')
+                while size>1024.0:
+                        i += 1
+                        size = int(size / 1024.0)
+                return f'{size} {name_size[i]}'    
                 
-                
-  
 
         def dirSize(self, dirPath: str):
             sizePath = 0
